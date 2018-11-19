@@ -1,9 +1,12 @@
 {
-  "scripts":{
+  "scripts": {
     "js": "npx browserify ./assets/js/main.js -o ./js/main.js"
   },
   "dependencies": {
     "browserify": "^16.2.3",
+    "gulp": "^3.9.1",
+    "gulp-browserify": "^0.5.1",
+    "gulp-watch": "^5.0.1",
     "lodash.throttle": "^4.1.1"
   }
 }
