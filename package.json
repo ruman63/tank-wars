@@ -1,0 +1,9 @@
+{
+  "scripts":{
+    "js": "npx browserify ./assets/js/main.js -o ./js/main.js"
+  },
+  "dependencies": {
+    "browserify": "^16.2.3",
+    "lodash.throttle": "^4.1.1"
+  }
+}
