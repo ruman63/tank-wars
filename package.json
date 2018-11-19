@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "js": "npx browserify ./assets/js/main.js -o ./js/main.js"
+    "build-js": "npx gulp build-js",
+    "watch": "npx gulp watch"
   },
   "dependencies": {
     "browserify": "^16.2.3",
