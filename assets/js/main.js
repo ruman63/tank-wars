@@ -13,7 +13,7 @@ start(ctx);
 canvas1.focus();
 
 let keysHeld = new Set();
-let tank = { x:25, y:25, w: 17, h:25, d:'e', src: '/assets/tank.png'}
+window.tank = { x:25, y:25, w: 25, h:17, d: 0, src: '/assets/tank.png'}
 let bullets = []
 
 let directions = 'nesw';
@@ -21,19 +21,10 @@ let directions = 'nesw';
  * renders within canvas
  * @param {CanvasRenderingContext2D} ctx 2D graphics context
  */
-function drawRotatedImage(ctx, img, x, y, w, h, dir) {
+function drawRotatedImage(ctx, img, {x, y, w, h, d}) {
     ctx.save();
     ctx.translate(x,y);
-    switch(dir) {
-        case 'e':
-            ctx.rotate(Math.PI/2);
-            break;
-        case 's':
-            ctx.rotate(Math.PI);
-            break;
-        case 'w':
-            ctx.rotate(3*Math.PI/2);
-    }
+    ctx.rotate(d * Math.PI / 180);
     ctx.drawImage(img, -w/2, -h/2, w, h);
     ctx.restore();
 }
@@ -41,36 +32,47 @@ function drawRotatedImage(ctx, img, x, y, w, h, dir) {
 function drawTank(ctx) {
     let img = new Image();
     img.src = tank.src;
-    drawRotatedImage(ctx, img, tank.x, tank.y, tank.w, tank.h, tank.d);
+    drawRotatedImage(ctx, img, tank);
 }
 
 function drawBullets(ctx) {
     let img = new Image();
     img.src = '/assets/bullet.png';
-    bullets.forEach(bullet => drawRotatedImage(ctx, img, bullet.x, bullet.y, bullet.w, bullet.h, bullet.d));
+    bullets.forEach(bullet => drawRotatedImage(ctx, img, bullet));
 }
-
-function move(movable, speed) {
-    switch(movable.d) {
-        case 'n': movable.y-=speed; break;
-        case 'w': movable.x-=speed; break;
-        case 's': movable.y+=speed; break;
-        case 'e': movable.x+=speed; break;
+function findPoint(direction, distance) {
+    let m = Math.tan(direction * Math.PI / 180);
+    let deltaX = Math.sqrt(distance*distance / (1 + m*m));
+    if( direction > 90 && direction <= 270 ) {
+        deltaX *= -1;
     }
+    if (distance < 0 ) {
+        deltaX *= -1;
+    }
+    let deltaY = m * deltaX;
+    return {deltaX, deltaY};
 }
-function tankRotateLeft() {
-    tank.d = directions[(directions.indexOf(tank.d) - 1)%4]
+function move(movable, speed) {
+    const {deltaX, deltaY} = findPoint(movable.d, speed);
+    movable.x += deltaX;
+    movable.y += deltaY;
 }
-function tankRotateRight() {
-    tank.d = directions[(directions.indexOf(tank.d) + 1)%4]
+function tankRotateLeft(deg = 3) {
+    tank.d -= deg;
+    tank.d = tank.d < 0 ? 360 + tank.d : tank.d;
+}
+function tankRotateRight(deg = 3) {
+    tank.d += deg;
+    tank.d = tank.d % 360;
 }
 function fireBullet() {
-    switch(tank.d) {
-        case 'n': return {x: tank.x, y: tank.y - Math.ceil(tank.h/2), w:5, h:7, d:tank.d};
-        case 'w': return {x: tank.x - Math.ceil(tank.w/2), y: tank.y, w:5, h:7, d:tank.d};
-        case 's': return {x: tank.x, y: tank.y + Math.ceil(tank.h/2), w:5, h:7, d:tank.d};
-        case 'e': return {x: tank.x + Math.ceil(tank.w/2), y: tank.y, w:5, h:7, d:tank.d};
-    }
+    const {deltaX, deltaY} = findPoint(tank.d, tank.w/2);
+    return {
+        x: tank.x + deltaX, 
+        y: tank.y + deltaY, 
+        w:5, h:7, 
+        d:tank.d
+    };
 }
 
 window.addEventListener('resize', () => {
@@ -91,12 +93,6 @@ document.addEventListener('keydown', function(evt){
         keysHeld.add(evt.code)
         evt.preventDefault();
     }
-
-    if ( keysHeld.has('ArrowLeft')) {
-        tankRotateLeft();
-    } else if (keysHeld.has('ArrowRight')) {
-        tankRotateRight();
-    } 
 
     if ( keysHeld.has('Space')){
         handleFire();
@@ -119,17 +115,23 @@ function isInCanvas({x,y,w,h}) {
 function restrictInCanvas(object) {
     const {x, y, w, h} = object;
     let bounds = {x:w/2, y:h/2, w: canvas1.width - (w/2), h:canvas1.height - (h/2)};
-    // return {
-        object.x = Math.min(Math.max(x, bounds.x), bounds.w);
-        object.y = Math.min(Math.max(y, bounds.y), bounds.h);
-    // }
+    object.x = Math.min(Math.max(x, bounds.x), bounds.w);
+    object.y = Math.min(Math.max(y, bounds.y), bounds.h);
 }
 function nextFrame() {
+
     if (keysHeld.has('ArrowUp')) {
         move(tank, 5);
     } else if (keysHeld.has('ArrowDown')) {
         move(tank, -5);
     }
+
+    if ( keysHeld.has('ArrowLeft')) {
+        tankRotateLeft();
+    } else if (keysHeld.has('ArrowRight')) {
+        tankRotateRight();
+    } 
+
     restrictInCanvas(tank);
     bullets.forEach(bullet => move(bullet, 7));
     bullets = bullets.filter(bullet => isInCanvas(bullet));
