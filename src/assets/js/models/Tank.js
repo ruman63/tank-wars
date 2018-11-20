@@ -16,7 +16,7 @@ module.exports = class Tank {
         this.direction = direction;
     }
     static get imageSource() {
-        return '/img/tank.png';
+        return './img/tank.png';
     }
     static get width() {
         return 26;

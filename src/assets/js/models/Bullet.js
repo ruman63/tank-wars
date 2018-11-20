@@ -9,10 +9,6 @@ module.exports = class Bullet {
         setTimeout(this.die.bind(this), Bullet.ttl);
     }
 
-    static get imageSource() {
-        return '/img/bullet.png';
-    }
-
     static get ttl() {
         return 1000 * 2;
     }
