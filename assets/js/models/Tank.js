@@ -1,5 +1,4 @@
-const { findPoint, liesIn } = require('../utilities');
-const throttle = require('lodash.throttle')
+const { findPoint, polygonsDoIntersect, rotatePoint } = require('../utilities');
 const Bullet = require('./Bullet');
 /**
  * @typedef Bounds
@@ -53,7 +52,6 @@ module.exports = class Tank {
         context.rotate(this.direction * Math.PI / 180);
 
         context.drawImage(image, -Tank.width/2, -Tank.height/2, Tank.width, Tank.height);
-
         context.restore();
     }
 
@@ -62,43 +60,48 @@ module.exports = class Tank {
      * @param {Bounds} within stay Within Bounds
      * @param {?bool} backward if moving backward
      */
-    move(within, backward = false) {
+    move(walls, backward = false) {
 
         const {deltaX, deltaY} = findPoint(this.direction, backward ? -Tank.linearSpeed : Tank.linearSpeed);
-        const nextPoint = {x: this.x + deltaX, y: this.y + deltaY }
-
-        let bounds = {
-            x:within.x + Tank.width/2, 
-            y: within.y + Tank.height/2,
-            width: within.width - Tank.width/2,
-            height: within.height - Tank.height/2,
+        this.x += deltaX;
+        this.y += deltaY;
+        if( walls.some(wall => polygonsDoIntersect(this.polygon(), wall.polygon())) ) {
+            this.move([], !backward);
+            return false;
         }
-        
-        if(liesIn(bounds, nextPoint)) {
-            this.x = nextPoint.x;
-            this.y = nextPoint.y;
-            return true;
-        }
-        return false;
+        return true;
     }
 
     /**
      * Rotates tank in clockwise/anticlockwise direction.
      * @param {bool} anticlockwise if rotating anticlockwise
      */
-    rotate(anticlockwise = false) {
-        this.direction += anticlockwise ? -Tank.rotationalSpeed : Tank.rotationalSpeed;
+    rotate(walls, clockwise = false) {
+        this.direction += clockwise ? Tank.rotationalSpeed : -Tank.rotationalSpeed;
         this.direction = this.direction < 0 ? 360 + this.direction : this.direction % 360;     
+        if( walls.some(wall => polygonsDoIntersect(this.polygon(), wall.polygon())) ) {
+            this.rotate([], !clockwise);
+            return false;
+        }
+        return false;
     }
 
     /**
-     * Fires a bullet, (throttled to 10 bullets per second)
+     * Fires a bullet.
      */
     fire() {
-        return throttle(function(){
-            const { deltaX, deltaY } = findPoint(this.direction, Tank.width/2);
-            return new Bullet(this.x + deltaX, this.y + deltaY, this.direction);
-        }.bind(this), 100)()
+        const { deltaX, deltaY } = findPoint(this.direction, (Tank.width/2) + (Bullet.width/2) + 1);
+        return new Bullet(this.x + deltaX, this.y + deltaY, this.direction);
+    }
+
+    polygon() {
+        const points = [
+            {x: this.x - Tank.width/2, y: this.y - Tank.height/2},
+            {x: this.x + Tank.width/2, y: this.y - Tank.height/2},
+            {x: this.x + Tank.width/2, y: this.y + Tank.height/2},
+            {x: this.x - Tank.width/2, y: this.y + Tank.height/2},
+        ];
+        return points.map(point => rotatePoint(point, this.direction, {x: this.x, y: this.y}));
     }
 
 }
