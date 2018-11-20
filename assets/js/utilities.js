@@ -20,17 +20,11 @@
   * @param {Number} distance size of the delta
   */
 function findPoint(direction, distance) {
-    let m = Math.tan(direction * Math.PI / 180);
-    let deltaX = Math.sqrt(distance*distance / (1 + m*m));
-    if( direction > 90 && direction <= 270 ) {
-        deltaX *= -1;
+    return {
+        deltaX: distance * Math.cos(direction * Math.PI / 180), 
+        deltaY: distance * Math.sin(direction * Math.PI / 180), 
+    };
     }
-    if (distance < 0 ) {
-        deltaX *= -1;
-    }
-    let deltaY = m * deltaX;
-    return {deltaX, deltaY};
-}
 /**
  * returns true if point lies inside bounds.
  * @param {Bounds} bounds Bounds
