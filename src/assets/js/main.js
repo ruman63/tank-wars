@@ -2,13 +2,14 @@ const Tank = require('./models/Tank');
 const Wall = require('./models/Wall');
 const {polygonsDoIntersect} = require('./utilities')
 let canvas = document.getElementById('canvas');
+
 let stopBtn = document.getElementById('stop');
 let timer = null;
 
 canvas.width = window.innerWidth * 0.8
 canvas.height = window.innerWidth * 0.8 * (9/16)
 let ctx = canvas.getContext("2d");
-start(ctx);
+start(ctx);   
 canvas.focus();
 
 window.addEventListener('resize', () => {

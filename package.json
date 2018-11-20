@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build-js": "npx gulp build-js",
+    "build-js": "npx gulp js",
     "watch": "npx gulp watch"
   },
   "dependencies": {
